@@ -17,7 +17,7 @@ public class MLModelInfoDTO {
     private String version;
     private BigDecimal mae;
     private BigDecimal rmse;
-    private BigDecimal accuracy;
+    private BigDecimal r2;
     private String trainedAt;
     private String createdAt;
 }

@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @Setter
 public class DashboardStatsDto {
 
-    // 👇 nombres EXACTOS a los que el frontend espera
+    // nombres EXACTOS a los que el frontend espera
     private long totalInsumos;
     private long totalPlatillos;
     private long totalProveedores;

@@ -18,7 +18,7 @@ public class MLModelDTO {
     private String version;
     private Map<String, Object> parameters;
     private Boolean isActive;
-    private BigDecimal accuracy;
+    private BigDecimal r2;
     private BigDecimal mae;
     private BigDecimal rmse;
     private LocalDateTime trainedAt;

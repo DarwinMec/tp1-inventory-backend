@@ -285,8 +285,8 @@ public class MLServiceIntegrationImpl implements MLServiceIntegration {
                 if (root.has("rmse")) {
                     info.setRmse(BigDecimal.valueOf(root.get("rmse").asDouble()));
                 }
-                if (root.has("accuracy") && !root.get("accuracy").isNull()) {
-                    info.setAccuracy(BigDecimal.valueOf(root.get("accuracy").asDouble()));
+                if (root.has("r2") && !root.get("r2").isNull()) {
+                    info.setR2(BigDecimal.valueOf(root.get("r2").asDouble()));
                 }
 
                 info.setTrainedAt(root.has("trained_at") ? root.get("trained_at").asText() : null);

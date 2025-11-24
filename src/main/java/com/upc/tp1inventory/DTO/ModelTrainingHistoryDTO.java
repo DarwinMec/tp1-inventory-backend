@@ -17,8 +17,8 @@ public class ModelTrainingHistoryDTO {
     private LocalDateTime trainingStart;
     private LocalDateTime trainingEnd;
     private Integer dataPointsUsed;
-    private BigDecimal accuracyBefore;
-    private BigDecimal accuracyAfter;
+    private BigDecimal r2Before;
+    private BigDecimal r2After;
     private String status;
     private String errorMessage;
     private String createdByUsername;

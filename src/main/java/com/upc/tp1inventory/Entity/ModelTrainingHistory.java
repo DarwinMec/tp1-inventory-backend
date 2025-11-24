@@ -38,11 +38,11 @@ public class ModelTrainingHistory {
     @Column(name = "data_points_used")
     private Integer dataPointsUsed;
 
-    @Column(name = "accuracy_before", precision = 5, scale = 4)
-    private BigDecimal accuracyBefore;
+    @Column(name = "r2Before", precision = 5, scale = 4)
+    private BigDecimal r2Before;
 
-    @Column(name = "accuracy_after", precision = 5, scale = 4)
-    private BigDecimal accuracyAfter;
+    @Column(name = "r2After", precision = 5, scale = 4)
+    private BigDecimal r2After;
 
     @Column(length = 20)
     private String status; // training, completed, failed

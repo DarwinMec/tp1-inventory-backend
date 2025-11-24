@@ -42,7 +42,7 @@ public class MLModel {
     private Boolean isActive;
 
     @Column(precision = 5, scale = 4)
-    private BigDecimal accuracy;
+    private BigDecimal r2;
 
     @Column(precision = 10, scale = 4)
     private BigDecimal mae;

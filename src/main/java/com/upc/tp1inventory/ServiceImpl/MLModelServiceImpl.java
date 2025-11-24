@@ -55,7 +55,7 @@ public class MLModelServiceImpl implements MLModelService {
         model.setVersion(dto.getVersion());
         model.setParameters(dto.getParameters());
         model.setIsActive(dto.getIsActive() != null ? dto.getIsActive() : Boolean.TRUE);
-        model.setAccuracy(dto.getAccuracy());
+        model.setR2(dto.getR2());
         model.setMae(dto.getMae());
         model.setRmse(dto.getRmse());
         model.setTrainedAt(dto.getTrainedAt() != null ? dto.getTrainedAt() : LocalDateTime.now());
@@ -75,7 +75,7 @@ public class MLModelServiceImpl implements MLModelService {
         if (dto.getModelType() != null) model.setModelType(dto.getModelType());
         if (dto.getVersion() != null) model.setVersion(dto.getVersion());
         if (dto.getParameters() != null) model.setParameters(dto.getParameters());
-        if (dto.getAccuracy() != null) model.setAccuracy(dto.getAccuracy());
+        if (dto.getR2() != null) model.setR2(dto.getR2());
         if (dto.getMae() != null) model.setMae(dto.getMae());
         if (dto.getRmse() != null) model.setRmse(dto.getRmse());
         if (dto.getTrainedAt() != null) model.setTrainedAt(dto.getTrainedAt());
@@ -113,7 +113,7 @@ public class MLModelServiceImpl implements MLModelService {
         dto.setVersion(model.getVersion());
         dto.setParameters(model.getParameters());
         dto.setIsActive(model.getIsActive());
-        dto.setAccuracy(model.getAccuracy());
+        dto.setR2(model.getR2());
         dto.setMae(model.getMae());
         dto.setRmse(model.getRmse());
         dto.setTrainedAt(model.getTrainedAt());

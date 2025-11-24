@@ -58,8 +58,8 @@ public class ModelTrainingHistoryServiceImpl implements ModelTrainingHistoryServ
         h.setTrainingStart(dto.getTrainingStart() != null ? dto.getTrainingStart() : LocalDateTime.now());
         h.setTrainingEnd(dto.getTrainingEnd());
         h.setDataPointsUsed(dto.getDataPointsUsed());
-        h.setAccuracyBefore(dto.getAccuracyBefore());
-        h.setAccuracyAfter(dto.getAccuracyAfter());
+        h.setR2Before(dto.getR2Before());
+        h.setR2After(dto.getR2After());
         h.setStatus(dto.getStatus());
         h.setErrorMessage(dto.getErrorMessage());
         h.setCreatedBy(user);
@@ -77,8 +77,8 @@ public class ModelTrainingHistoryServiceImpl implements ModelTrainingHistoryServ
         dto.setTrainingStart(h.getTrainingStart());
         dto.setTrainingEnd(h.getTrainingEnd());
         dto.setDataPointsUsed(h.getDataPointsUsed());
-        dto.setAccuracyBefore(h.getAccuracyBefore());
-        dto.setAccuracyAfter(h.getAccuracyAfter());
+        dto.setR2Before(h.getR2Before());
+        dto.setR2After(h.getR2After());
         dto.setStatus(h.getStatus());
         dto.setErrorMessage(h.getErrorMessage());
         dto.setCreatedAt(h.getCreatedAt());

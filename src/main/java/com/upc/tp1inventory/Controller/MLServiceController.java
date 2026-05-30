@@ -3,26 +3,16 @@ package com.upc.tp1inventory.Controller;
 import com.upc.tp1inventory.DTO.*;
 import com.upc.tp1inventory.Entity.User;
 import com.upc.tp1inventory.Service.MLServiceIntegration;
+import com.upc.tp1inventory.Service.WeeklyGlobalSupplyService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.upc.tp1inventory.Service.WeeklyGlobalSupplyService;
-
 
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Controlador para integración con el servicio de Machine Learning en Python (FastAPI)
- *
- * Este controlador se diferencia de PredictionController en que:
- * - PredictionController: gestiona predicciones almacenadas en la BD local
- * - MLServiceController: se comunica con el servicio externo de Python para ML
- *
- * Endpoints base: /api/ml-service
- */
 @RestController
 @RequestMapping("/api/ml-service")
 @CrossOrigin(origins = "*")
@@ -40,36 +30,40 @@ public class MLServiceController {
     @GetMapping("/health")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','EMPLOYEE')")
     public ResponseEntity<MLServiceHealthDTO> checkHealth() {
-        try {
-            MLServiceHealthDTO health = mlServiceIntegration.getMLServiceHealth();
-            return ResponseEntity.ok(health);
-        } catch (Exception e) {
-            MLServiceHealthDTO error = new MLServiceHealthDTO();
-            error.setStatus("error");
-            error.setMessage("Error verificando servicio: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
+        MLServiceHealthDTO health = mlServiceIntegration.getMLServiceHealth();
+        return ResponseEntity.ok(health);
     }
 
     @PostMapping("/train")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<MLTrainResponseDTO> trainModel(
-            @RequestBody MLTrainRequestDTO request,
+            @RequestBody(required = false) MLTrainRequestDTO request,
             @AuthenticationPrincipal User currentUser) {
 
         try {
-            // Si no viene createdBy, usar el usuario autenticado
+            if (request == null) {
+                request = new MLTrainRequestDTO();
+            }
+
             if (request.getCreatedBy() == null && currentUser != null) {
                 request.setCreatedBy(currentUser.getUsername());
             }
 
+            if (request.getFastMode() == null) {
+                request.setFastMode(true);
+            }
+
+            if (request.getRegisterInDb() == null) {
+                request.setRegisterInDb(true);
+            }
+
             MLTrainResponseDTO response = mlServiceIntegration.trainModel(request);
 
-            if (response.getSuccess()) {
+            if (Boolean.TRUE.equals(response.getSuccess())) {
                 return ResponseEntity.ok(response);
-            } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 
         } catch (Exception e) {
             MLTrainResponseDTO error = new MLTrainResponseDTO();
@@ -82,16 +76,33 @@ public class MLServiceController {
     @PostMapping("/predict")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','EMPLOYEE')")
     public ResponseEntity<MLPredictionResponseDTO> generatePredictions(
-            @RequestBody MLPredictionRequestDTO request) {
+            @RequestBody(required = false) MLPredictionRequestDTO request,
+            @AuthenticationPrincipal User currentUser) {
 
         try {
+            if (request == null) {
+                request = new MLPredictionRequestDTO();
+            }
+
+            if (request.getCreatedBy() == null && currentUser != null) {
+                request.setCreatedBy(currentUser.getUsername());
+            }
+
+            if (request.getWeeksAhead() == null) {
+                request.setWeeksAhead(4);
+            }
+
+            if (request.getSaveToDb() == null) {
+                request.setSaveToDb(true);
+            }
+
             MLPredictionResponseDTO response = mlServiceIntegration.generatePredictions(request);
 
-            if (response.getSuccess()) {
+            if (Boolean.TRUE.equals(response.getSuccess())) {
                 return ResponseEntity.ok(response);
-            } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 
         } catch (Exception e) {
             MLPredictionResponseDTO error = new MLPredictionResponseDTO();
@@ -107,44 +118,26 @@ public class MLServiceController {
             @PathVariable UUID dishId,
             @RequestParam(defaultValue = "4") Integer weeks) {
 
-        try {
-            List<MLServicePredictionDTO> predictions =
-                    mlServiceIntegration.getPredictionsForDish(dishId, weeks);
+        List<MLServicePredictionDTO> predictions =
+                mlServiceIntegration.getPredictionsForDish(dishId, weeks);
 
-            return ResponseEntity.ok(predictions);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(List.of());
-        }
+        return ResponseEntity.ok(predictions);
     }
 
     @GetMapping("/predictions/latest")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','EMPLOYEE')")
     public ResponseEntity<List<MLServicePredictionDTO>> getLatestPredictions() {
-        try {
-            List<MLServicePredictionDTO> predictions =
-                    mlServiceIntegration.getLatestPredictions();
+        List<MLServicePredictionDTO> predictions =
+                mlServiceIntegration.getLatestPredictions();
 
-            return ResponseEntity.ok(predictions);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(List.of());
-        }
+        return ResponseEntity.ok(predictions);
     }
 
     @GetMapping("/model/active")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<MLModelInfoDTO> getActiveModelInfo() {
-        try {
-            MLModelInfoDTO info = mlServiceIntegration.getActiveModelInfo();
-            return ResponseEntity.ok(info);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MLModelInfoDTO());
-        }
+        MLModelInfoDTO info = mlServiceIntegration.getActiveModelInfo();
+        return ResponseEntity.ok(info);
     }
 
     @PostMapping("/sync")
@@ -152,22 +145,14 @@ public class MLServiceController {
     public ResponseEntity<MLPredictionResponseDTO> syncPredictions(
             @RequestParam(defaultValue = "4") Integer weeks) {
 
-        try {
-            MLPredictionResponseDTO response =
-                    mlServiceIntegration.syncPredictionsToDatabase(weeks);
+        MLPredictionResponseDTO response =
+                mlServiceIntegration.syncPredictionsToDatabase(weeks);
 
-            if (response.getSuccess()) {
-                return ResponseEntity.ok(response);
-            } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-            }
-
-        } catch (Exception e) {
-            MLPredictionResponseDTO error = new MLPredictionResponseDTO();
-            error.setSuccess(false);
-            error.setMessage("Error sincronizando predicciones: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        if (Boolean.TRUE.equals(response.getSuccess())) {
+            return ResponseEntity.ok(response);
         }
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
     @GetMapping("/quick-forecast/{dishId}")
@@ -175,27 +160,16 @@ public class MLServiceController {
     public ResponseEntity<MLServicePredictionDTO> getQuickForecast(
             @PathVariable UUID dishId) {
 
-        try {
-            List<MLServicePredictionDTO> predictions =
-                    mlServiceIntegration.getPredictionsForDish(dishId, 1);
+        List<MLServicePredictionDTO> predictions =
+                mlServiceIntegration.getPredictionsForDish(dishId, 1);
 
-            if (predictions.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            return ResponseEntity.ok(predictions.get(0));
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MLServicePredictionDTO());
+        if (predictions.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
+
+        return ResponseEntity.ok(predictions.get(0));
     }
 
-    /**
-     * Predicción semanal global:
-     * - Predicciones de demanda por plato
-     * - Lista consolidada de insumos y cantidades a comprar
-     */
     @GetMapping("/weekly-supply")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<WeeklyGlobalPredictionResponseDTO> getWeeklySupplyPlan(
@@ -206,6 +180,4 @@ public class MLServiceController {
 
         return ResponseEntity.ok(response);
     }
-
-
 }

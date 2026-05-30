@@ -58,16 +58,14 @@ public class UserServiceImpl implements UserService {
         user.setPhone(request.getPhone());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
-        // Rol: si viene nulo o vacío, lo dejamos como EMPLOYEE por defecto
         String roleStr = (request.getRole() == null || request.getRole().isBlank())
-                ? "employee"
-                : request.getRole().toLowerCase();
+                ? "EMPLOYEE"
+                : request.getRole().trim().toUpperCase();
 
         try {
             user.setRole(User.Role.valueOf(roleStr));
         } catch (IllegalArgumentException ex) {
-            // Si mandan algo raro, lo dejamos como employee
-            user.setRole(User.Role.employee);
+            user.setRole(User.Role.EMPLOYEE);
         }
 
         user.setIsActive(true);

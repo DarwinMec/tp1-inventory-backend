@@ -1,6 +1,8 @@
 package com.upc.tp1inventory.Repository;
 
 import com.upc.tp1inventory.Entity.Sale;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,4 +13,5 @@ import java.util.UUID;
 @Repository
 public interface SaleRepository extends JpaRepository<Sale, UUID> {
     List<Sale> findBySaleDateBetween(LocalDate startDate, LocalDate endDate);
+    Page<Sale> findAll(Pageable pageable);
 }

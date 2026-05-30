@@ -9,7 +9,7 @@ public class UserCreateRequest {
     private String username;
     private String email;
     private String fullName;
-    private String role;      // "admin", "manager" o "employee"
+    private String role;      // "ADMIN", "MANAGER" o "EMPLOYEE"
     private String phone;
     private String password;
 }

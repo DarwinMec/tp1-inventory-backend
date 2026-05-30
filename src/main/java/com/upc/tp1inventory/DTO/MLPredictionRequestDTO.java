@@ -8,7 +8,10 @@ import java.util.UUID;
 @Getter
 @Setter
 public class MLPredictionRequestDTO {
-    private UUID dishId;        // null = todos los platos
+
+    private UUID dishId;
     private Integer weeksAhead = 4;
     private Boolean saveToDb = true;
+
+    private String createdBy;
 }

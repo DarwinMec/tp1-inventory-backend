@@ -2,17 +2,20 @@ package com.upc.tp1inventory.DTO;
 
 import lombok.Getter;
 import lombok.Setter;
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
 @Getter
 @Setter
 public class DishDTO {
+
     private UUID id;
     private String name;
     private String description;
     private String category;
-    private Double price;
+    private BigDecimal price;
     private Boolean isActive;
     private Integer preparationTime;
 

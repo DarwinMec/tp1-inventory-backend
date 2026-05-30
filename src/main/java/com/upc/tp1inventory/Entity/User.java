@@ -24,7 +24,7 @@ import java.util.UUID;
 public class User implements UserDetails {
 
     public enum Role {
-        admin, manager, employee
+        ADMIN, MANAGER, EMPLOYEE
     }
 
     @Id

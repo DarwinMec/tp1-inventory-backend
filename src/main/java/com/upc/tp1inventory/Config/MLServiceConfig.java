@@ -18,7 +18,7 @@ public class MLServiceConfig {
 
         // Timeout de lectura: 60 segundos (60000 ms)
         // Más alto para entrenamientos de ML que pueden tardar
-        factory.setReadTimeout(60000);
+        factory.setReadTimeout(300000);
 
         return builder
                 .requestFactory(() -> factory)

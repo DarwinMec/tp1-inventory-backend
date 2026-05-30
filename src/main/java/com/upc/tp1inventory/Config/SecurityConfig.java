@@ -47,7 +47,9 @@ public class SecurityConfig {
                 .sessionManagement(sess ->
                         sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()   // login libre
+                        .requestMatchers("/api/auth/**",  "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html").permitAll()   // login libre
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
@@ -63,8 +65,8 @@ public class SecurityConfig {
         // Orígenes permitidos: pon aquí las URLs de tu frontend
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",
-                "http://localhost:3001"
-                // agrega otras URLs si las usas
+                "http://localhost:3001",
+                "https://d2d0q2txlxmlui.cloudfront.net"
         ));
 
         // Métodos permitidos

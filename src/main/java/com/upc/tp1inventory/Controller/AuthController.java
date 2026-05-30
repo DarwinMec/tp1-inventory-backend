@@ -14,6 +14,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
@@ -37,16 +39,31 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
         try {
+            String identifier = request.getUsername();
+
+            if (identifier == null || identifier.isBlank()) {
+                return ResponseEntity.badRequest().body("Debe ingresar usuario o email");
+            }
+
+            if (request.getPassword() == null || request.getPassword().isBlank()) {
+                return ResponseEntity.badRequest().body("Debe ingresar contraseña");
+            }
+
             var authToken = new UsernamePasswordAuthenticationToken(
-                    request.getUsername(),
+                    identifier.trim(),
                     request.getPassword()
             );
+
             authenticationManager.authenticate(authToken);
 
-            User user = userRepository.findByUsername(request.getUsername())
+            User user = userRepository.findByUsernameOrEmail(identifier.trim())
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+
             String token = jwtService.generateToken(user);
+
             return ResponseEntity.ok(new AuthResponse(token));
 
         } catch (AuthenticationException ex) {
@@ -54,10 +71,8 @@ public class AuthController {
         }
     }
 
-    // Nuevo endpoint: perfil del usuario autenticado
     @GetMapping("/me")
     public ResponseEntity<UserDTO> me(@AuthenticationPrincipal User user) {
-        // user ya viene del SecurityContext gracias al filtro JWT
         UserDTO dto = userService.getCurrentUser(user.getUsername());
         return ResponseEntity.ok(dto);
     }

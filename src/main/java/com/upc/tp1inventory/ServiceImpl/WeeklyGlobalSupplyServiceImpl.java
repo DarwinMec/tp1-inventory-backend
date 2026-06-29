@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class WeeklyGlobalSupplyServiceImpl implements WeeklyGlobalSupplyService {
@@ -70,11 +71,19 @@ public class WeeklyGlobalSupplyServiceImpl implements WeeklyGlobalSupplyService 
         }
 
         /*
-         * Por ahora el plan semanal trabaja con una sola semana objetivo.
-         * Si FastAPI devuelve varias semanas, usamos la primera semana disponible
-         * para evitar sumar incorrectamente varias semanas en un solo plan.
+         * El endpoint recibe weeksAhead como horizonte seleccionado por el usuario.
+         * FastAPI devuelve predicciones desde la semana 1 hasta la semana N.
+         * Para el plan semanal global debemos mostrar únicamente la semana objetivo
+         * correspondiente al horizonte solicitado:
+         *
+         * weeksAhead = 1 -> primera semana futura
+         * weeksAhead = 2 -> segunda semana futura
+         * weeksAhead = 4 -> cuarta semana futura
+         *
+         * Antes se tomaba predictions.get(0), por eso la semana objetivo no cambiaba
+         * aunque el usuario modificara el campo en la interfaz.
          */
-        String targetWeek = predictions.get(0).getWeekStart();
+        String targetWeek = selectTargetWeek(predictions, weeksAhead);
 
         List<MLServicePredictionDTO> targetWeekPredictions = predictions.stream()
                 .filter(pred -> pred.getWeekStart() != null)
@@ -159,6 +168,24 @@ public class WeeklyGlobalSupplyServiceImpl implements WeeklyGlobalSupplyService 
         response.setSupplies(new ArrayList<>(suppliesMap.values()));
 
         return response;
+    }
+
+    private String selectTargetWeek(List<MLServicePredictionDTO> predictions, Integer weeksAhead) {
+        List<String> orderedWeeks = predictions.stream()
+                .map(MLServicePredictionDTO::getWeekStart)
+                .filter(week -> week != null && !week.isBlank())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+
+        if (orderedWeeks.isEmpty()) {
+            return null;
+        }
+
+        int safeWeeksAhead = weeksAhead != null && weeksAhead > 0 ? weeksAhead : 1;
+        int targetIndex = Math.min(safeWeeksAhead, orderedWeeks.size()) - 1;
+
+        return orderedWeeks.get(targetIndex);
     }
 
     private void addSupplyRequirement(Map<UUID, WeeklyGlobalSupplyItemDTO> suppliesMap,

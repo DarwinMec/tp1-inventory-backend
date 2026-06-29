@@ -16,6 +16,7 @@ public class UserDTO {
     private String fullName;
     private String role;
     private Boolean isActive;
+    private Boolean mustChangePassword;
     private LocalDateTime createdAt;
 
 }

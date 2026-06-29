@@ -14,6 +14,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByEmail(String email);
 
+    Optional<User> findByUsernameIgnoreCase(String username);
+
+    Optional<User> findByEmailIgnoreCase(String email);
+
     @Query("""
             SELECT u
             FROM User u
@@ -25,4 +29,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String email);
 
     boolean existsByUsername(String username);
+
+    boolean existsByEmailIgnoreCase(String email);
+
+    boolean existsByUsernameIgnoreCase(String username);
 }

@@ -59,6 +59,9 @@ public class User implements UserDetails {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
+    @Column(name = "must_change_password", nullable = false)
+    private Boolean mustChangePassword = false;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -76,11 +79,14 @@ public class User implements UserDetails {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
         if (isActive == null) isActive = true;
+        if (mustChangePassword == null) mustChangePassword = false;
     }
 
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
+        if (isActive == null) isActive = true;
+        if (mustChangePassword == null) mustChangePassword = false;
     }
 
     /*  ===== Métodos de UserDetails ===== */
@@ -88,7 +94,6 @@ public class User implements UserDetails {
     @Override
     @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // ROLE_ADMIN, ROLE_MANAGER, ROLE_EMPLOYEE
         String roleName = "ROLE_" + this.role.name().toUpperCase();
         return List.of(new SimpleGrantedAuthority(roleName));
     }

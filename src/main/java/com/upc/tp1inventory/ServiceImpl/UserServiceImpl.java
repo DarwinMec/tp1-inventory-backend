@@ -44,31 +44,38 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO createUser(UserCreateRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException("El username ya está en uso");
+        validateCreateRequest(request);
+
+        String username = request.getUsername().trim();
+        String email = request.getEmail().trim().toLowerCase();
+        String fullName = request.getFullName().trim();
+        String phone = request.getPhone() == null ? null : request.getPhone().trim();
+        String roleStr = request.getRole().trim().toUpperCase();
+
+        if (userRepository.existsByUsernameIgnoreCase(username)) {
+            throw new IllegalArgumentException("El nombre de usuario ya se encuentra registrado.");
         }
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("El email ya está en uso");
+
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            throw new IllegalArgumentException("El correo electrónico ya se encuentra registrado.");
+        }
+
+        User.Role role;
+        try {
+            role = User.Role.valueOf(roleStr);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("El rol seleccionado no es válido.");
         }
 
         User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setFullName(request.getFullName());
-        user.setPhone(request.getPhone());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-
-        String roleStr = (request.getRole() == null || request.getRole().isBlank())
-                ? "EMPLOYEE"
-                : request.getRole().trim().toUpperCase();
-
-        try {
-            user.setRole(User.Role.valueOf(roleStr));
-        } catch (IllegalArgumentException ex) {
-            user.setRole(User.Role.EMPLOYEE);
-        }
-
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setFullName(fullName);
+        user.setPhone(phone == null || phone.isBlank() ? null : phone);
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword().trim()));
+        user.setRole(role);
         user.setIsActive(true);
+        user.setMustChangePassword(true);
 
         User saved = userRepository.save(user);
         return toDTO(saved);
@@ -79,11 +86,48 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado: " + id));
 
-        user.setFullName(dto.getFullName());
-        user.setEmail(dto.getEmail());
-        user.setUsername(dto.getUsername());
-        user.setIsActive(dto.getIsActive());
-        // opcional: podrías permitir actualizar phone y role si lo deseas
+        if (dto.getUsername() == null || dto.getUsername().isBlank()) {
+            throw new IllegalArgumentException("El nombre de usuario es obligatorio.");
+        }
+
+        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
+            throw new IllegalArgumentException("El correo electrónico es obligatorio.");
+        }
+
+        if (dto.getFullName() == null || dto.getFullName().isBlank()) {
+            throw new IllegalArgumentException("El nombre completo es obligatorio.");
+        }
+
+        String username = dto.getUsername().trim();
+        String email = dto.getEmail().trim().toLowerCase();
+
+        userRepository.findByUsernameIgnoreCase(username).ifPresent(existing -> {
+            if (!existing.getId().equals(id)) {
+                throw new IllegalArgumentException("El nombre de usuario ya se encuentra registrado.");
+            }
+        });
+
+        userRepository.findByEmailIgnoreCase(email).ifPresent(existing -> {
+            if (!existing.getId().equals(id)) {
+                throw new IllegalArgumentException("El correo electrónico ya se encuentra registrado.");
+            }
+        });
+
+        user.setFullName(dto.getFullName().trim());
+        user.setEmail(email);
+        user.setUsername(username);
+
+        if (dto.getRole() != null && !dto.getRole().isBlank()) {
+            try {
+                user.setRole(User.Role.valueOf(dto.getRole().trim().toUpperCase()));
+            } catch (IllegalArgumentException ex) {
+                throw new IllegalArgumentException("El rol seleccionado no es válido.");
+            }
+        }
+
+        if (dto.getIsActive() != null) {
+            user.setIsActive(dto.getIsActive());
+        }
 
         User saved = userRepository.save(user);
         return toDTO(saved);
@@ -99,9 +143,39 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO getCurrentUser(String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado: " + username));
         return toDTO(user);
+    }
+
+    private void validateCreateRequest(UserCreateRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("La solicitud de creación de usuario es obligatoria.");
+        }
+
+        if (request.getUsername() == null || request.getUsername().isBlank()) {
+            throw new IllegalArgumentException("El nombre de usuario es obligatorio.");
+        }
+
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new IllegalArgumentException("El correo electrónico es obligatorio.");
+        }
+
+        if (request.getFullName() == null || request.getFullName().isBlank()) {
+            throw new IllegalArgumentException("El nombre completo es obligatorio.");
+        }
+
+        if (request.getRole() == null || request.getRole().isBlank()) {
+            throw new IllegalArgumentException("El rol es obligatorio.");
+        }
+
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new IllegalArgumentException("La contraseña temporal es obligatoria.");
+        }
+
+        if (request.getPassword().trim().length() < 6) {
+            throw new IllegalArgumentException("La contraseña debe tener al menos 6 caracteres.");
+        }
     }
 
     private UserDTO toDTO(User user) {
@@ -112,6 +186,7 @@ public class UserServiceImpl implements UserService {
         dto.setFullName(user.getFullName());
         dto.setRole(user.getRole().name());
         dto.setIsActive(user.getIsActive());
+        dto.setMustChangePassword(user.getMustChangePassword());
         dto.setCreatedAt(user.getCreatedAt());
         return dto;
     }

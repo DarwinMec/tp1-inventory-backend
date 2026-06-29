@@ -1,22 +1,35 @@
 # ====== ETAPA 1: Build ======
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:17-jdk AS build
+
 WORKDIR /app
 
-# Copiar todo el proyecto
-COPY . .
+# Copiar archivos Maven primero para aprovechar caché
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
 
-# Compilar el proyecto con Maven Wrapper incluido en tu backend
+# Dar permisos al Maven Wrapper
+RUN chmod +x mvnw
+
+# Descargar dependencias
+RUN ./mvnw dependency:go-offline -B
+
+# Copiar código fuente
+COPY src src
+
+# Compilar proyecto
 RUN ./mvnw clean package -DskipTests
 
 
 # ====== ETAPA 2: Runtime ======
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:17-jre
+
 WORKDIR /app
 
-# Copiar el JAR construido desde la etapa anterior
+# Copiar JAR generado
 COPY --from=build /app/target/*.jar app.jar
 
-# Exponer el puerto donde corre tu backend
+# Puerto del backend
 EXPOSE 8080
 
 # Ejecutar Spring Boot
